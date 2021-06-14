@@ -1,33 +1,46 @@
 library("dplyr")
 
+#------------------------------
+# Instructions
+#------------------------------
 #Set working directory first so you don't have to put in the full paths:
 # - In RStudio:
 #   -Session -> Set Working Directory -> To Source File Location
 
+#------------------------------
 # Options
+#------------------------------
 nBootstraps <- 1000
 
-#Load and examine analysis data
+#------------------------------
+# Load data
+#------------------------------
 d <- read.csv(file.path("data.csv"))
+
 head(d)
 pairs(d)
 
-#Set up a table to hold the bootstrap results
-results <- data.frame(bootstrapID=1:nBootstraps,
-                      estimate=rep(NA,nBootstraps))
-
-#Examine results
-head(results)
-
+#------------------------------
+# Run main analysis
+#------------------------------
 #This is the analysis function you want to get a bootstrap estimate for:
 model <- lm(y~a*x, data=d)
 summary(model)
 coefficients(model)
-coefficients(model)[["a"]]
+main_est <- coefficients(model)[["a"]]
+main_est
 
 #The coefficient of interest estimated using the full data set is:
-model_CI <- confint(model)["a",]
-model_CI
+main_CI <- confint(model)["a",]
+main_CI
+
+#------------------------------
+#Run bootstrapping
+#------------------------------
+#Set up a table to hold the bootstrap results
+results <- data.frame(bootstrapID=1:nBootstraps,
+                      estimate=rep(NA,nBootstraps))
+head(results)
 
 #Bootstrapping loop
 for(i in 1:nBootstraps){
@@ -43,7 +56,18 @@ for(i in 1:nBootstraps){
 
 #Look at summary of bootstrap results and get bootstrap 95% CI
 summary(results)
-quantile(results$estimate,probs=c(0.025,0.975))
+bootstrap_est <- mean(results$estimate)
+bootstrap_CI <- quantile(results$estimate,probs=c(0.025,0.975))
 
-#Compare to estimate output by model:
-model_CI
+#------------------------------
+# Compare results
+#------------------------------
+#Compare to estimate output by model (They should be similar for this simple linear model)
+
+#Estimates
+main_est
+bootstrap_est
+
+#CIs
+main_CI
+bootstrap_CI
